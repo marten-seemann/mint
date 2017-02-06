@@ -21,6 +21,7 @@ var (
 	responseFile string
 	h2           bool
 	sendTickets  bool
+	earlyData    bool
 )
 
 type responder []byte
@@ -37,6 +38,7 @@ func main() {
 	flag.StringVar(&responseFile, "response", "", "file to serve")
 	flag.BoolVar(&h2, "h2", false, "whether to use HTTP/2 (exclusively)")
 	flag.BoolVar(&sendTickets, "tickets", true, "whether to send session tickets")
+	flag.BoolVar(&earlyData, "early", true, "whether to allow early / 0xRTT data")
 	flag.Parse()
 
 	var certChain []*x509.Certificate
@@ -83,22 +85,26 @@ func main() {
 	}
 	handler := responder(response)
 
+	// Check for conlflict between options
+	if earlyData && !sendTickets {
+		log.Fatalf("Cannot support early data if the server doesn't send tickets")
+	}
+
 	config := mint.Config{
-		SendSessionTickets: true,
 		ServerName:         serverName,
 		NextProtos:         []string{"http/1.1"},
+		AllowEarlyData:     earlyData,
+		SendSessionTickets: sendTickets,
 	}
 
 	if h2 {
 		config.NextProtos = []string{"h2"}
 	}
 
-	config.SendSessionTickets = sendTickets
-
 	if certChain != nil && priv != nil {
 		log.Printf("Loading cert: %v key: %v", certFile, keyFile)
 		config.Certificates = []*mint.Certificate{
-			&mint.Certificate{
+			{
 				Chain:      certChain,
 				PrivateKey: priv,
 			},
