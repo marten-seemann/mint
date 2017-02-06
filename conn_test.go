@@ -428,8 +428,14 @@ func Test0xRTT(t *testing.T) {
 
 	assertContextEquals(t, client.handshake.cryptoContext(), server.handshake.cryptoContext())
 	assertDeepEquals(t, client.handshake.ConnectionParams(), server.handshake.ConnectionParams())
-	assert(t, client.handshake.ConnectionParams().UsingEarlyData, "Session did not negotiate early data")
-	assertByteEquals(t, client.earlyData, server.readBuffer)
+
+	buf := make([]byte, len(client.earlyData))
+	n, err := server.Read(buf)
+	assertNotError(t, err, "Failed to read from early data")
+	assertEquals(t, n, len(client.earlyData))
+	assert(t, client.handshake.ConnectionParams().UsingEarlyData, "Client did not negotiate early data")
+	assert(t, server.handshake.ConnectionParams().UsingEarlyData, "Server did not negotiate early data")
+	assertByteEquals(t, client.earlyData, buf)
 }
 
 func Test0xRTTFailure(t *testing.T) {
