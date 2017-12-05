@@ -68,9 +68,9 @@ type Config struct {
 
 	// Server fields
 	SendSessionTickets bool
-	TicketLifetime     uint32
+	TicketLifetime     time.Duration // must be less than 2^32 seconds, i.e. less than ~136 years
 	TicketLen          int
-	EarlyDataLifetime  uint32
+	EarlyDataLifetime  time.Duration // must be less than 2^32 seconds, i.e. less than ~136 years
 	AllowEarlyData     bool
 	// Require the client to echo a cookie.
 	RequireCookie bool

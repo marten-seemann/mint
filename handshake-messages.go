@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/binary"
 	"fmt"
+	"time"
 
 	"github.com/bifurcation/mint/syntax"
 )
@@ -382,7 +383,7 @@ type NewSessionTicketBody struct {
 
 const ticketNonceLen = 16
 
-func NewSessionTicket(ticketLen int, ticketLifetime uint32) (*NewSessionTicketBody, error) {
+func NewSessionTicket(ticketLen int, ticketLifetime time.Duration) (*NewSessionTicketBody, error) {
 	buf := make([]byte, 4+ticketNonceLen+ticketLen)
 	_, err := prng.Read(buf)
 	if err != nil {
@@ -390,7 +391,7 @@ func NewSessionTicket(ticketLen int, ticketLifetime uint32) (*NewSessionTicketBo
 	}
 
 	tkt := &NewSessionTicketBody{
-		TicketLifetime: ticketLifetime,
+		TicketLifetime: uint32(ticketLifetime.Seconds()),
 		TicketAgeAdd:   binary.BigEndian.Uint32(buf[:4]),
 		TicketNonce:    buf[4 : 4+ticketNonceLen],
 		Ticket:         buf[4+ticketNonceLen:],

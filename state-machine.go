@@ -122,14 +122,14 @@ func (state *StateConnected) KeyUpdate(request KeyUpdateRequest) ([]HandshakeAct
 	return toSend, AlertNoAlert
 }
 
-func (state *StateConnected) NewSessionTicket(length int, lifetime, earlyDataLifetime uint32) ([]HandshakeAction, Alert) {
+func (state *StateConnected) NewSessionTicket(length int, lifetime, earlyDataLifetime time.Duration) ([]HandshakeAction, Alert) {
 	tkt, err := NewSessionTicket(length, lifetime)
 	if err != nil {
 		logf(logTypeHandshake, "[StateConnected] Error generating NewSessionTicket: %v", err)
 		return nil, AlertInternalError
 	}
 
-	err = tkt.Extensions.Add(&TicketEarlyDataInfoExtension{earlyDataLifetime})
+	err = tkt.Extensions.Add(&TicketEarlyDataInfoExtension{uint32(earlyDataLifetime.Seconds())})
 	if err != nil {
 		logf(logTypeHandshake, "[StateConnected] Error adding extension to NewSessionTicket: %v", err)
 		return nil, AlertInternalError
